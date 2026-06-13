@@ -1,0 +1,447 @@
+CLAUDE VERSION OF E-VOTING
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0"/>
+<title>E-Voting | Sri Chaitanya Techno School</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.30.0/tabler-icons.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --accent:#ff6b35; --accent2:#f7931e;
+    --gold:#ffd24d; --lav:#c9a8f0; --sky:#87ceeb;
+    --glass:rgba(255,255,255,0.10);
+    --glass-brd:rgba(255,255,255,0.22);
+    --txt:#ffffff; --muted:rgba(255,255,255,0.62);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:'Inter',-apple-system,Segoe UI,sans-serif;color:var(--txt);overflow:hidden;position:relative;background:#3a2a6d}
+  .bg{position:fixed;inset:0;z-index:-2;overflow:hidden}
+  .blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.55;animation:float 18s ease-in-out infinite}
+  .blob.b1{width:520px;height:520px;background:#7b4fc7;top:-120px;left:-100px}
+  .blob.b2{width:480px;height:480px;background:#3a7bd5;bottom:-140px;right:-100px;animation-delay:-6s}
+  .blob.b3{width:420px;height:420px;background:#ff6b35;top:40%;left:55%;opacity:.28;animation-delay:-11s}
+  .bg-grad{position:fixed;inset:0;z-index:-3;background:linear-gradient(150deg,#4a2f8f 0%,#5b46c0 35%,#3a7bd5 75%,#5fa8e0 100%);background-size:200% 200%;animation:shift 16s ease infinite}
+  @keyframes shift{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+  @keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(40px,-30px) scale(1.08)}66%{transform:translate(-30px,40px) scale(.94)}}
+  #app{height:100vh;width:100vw;position:relative;overflow:hidden}
+  .stepper{position:fixed;top:0;left:0;right:0;z-index:50;padding:14px 16px 10px;backdrop-filter:blur(10px);background:rgba(30,20,60,0.28);border-bottom:1px solid rgba(255,255,255,0.08);display:none}
+  .stepper.show{display:block}
+  .stepper-track{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:6px}
+  .step-dot{flex:1;height:6px;border-radius:6px;background:rgba(255,255,255,0.16);transition:all .4s;position:relative}
+  .step-dot.done{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .step-dot.active{background:var(--gold);box-shadow:0 0 12px rgba(255,210,77,.6)}
+  .stepper-label{max-width:760px;margin:8px auto 0;display:flex;justify-content:space-between;font-size:11px;letter-spacing:1px;color:var(--muted);text-transform:uppercase}
+  .stepper-label b{color:var(--gold);font-weight:600}
+  .page{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:84px 18px 28px;overflow-y:auto;transition:transform .55s cubic-bezier(.7,0,.2,1),opacity .45s;will-change:transform}
+  .page.hide-l{transform:translateX(-60px);opacity:0;pointer-events:none}
+  .page.hide-r{transform:translateX(60px);opacity:0;pointer-events:none}
+  .page::-webkit-scrollbar{width:0}
+  .card{background:var(--glass);border:1px solid var(--glass-brd);border-radius:26px;padding:30px 28px;width:100%;max-width:480px;backdrop-filter:blur(18px) saturate(1.2);box-shadow:0 24px 70px rgba(20,10,50,.35);position:relative;animation:rise .6s cubic-bezier(.2,.8,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+  .landing{text-align:center}
+  .logo-wrap{position:relative;width:130px;height:130px;margin:0 auto 22px;animation:logoIn 1s cubic-bezier(.2,.9,.2,1)}
+  .logo-wrap::after{content:'';position:absolute;inset:-14px;border-radius:50%;border:2px solid rgba(255,255,255,.18);animation:spin 14s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes logoIn{from{opacity:0;transform:scale(.6) rotate(-12deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+  .school-logo{width:130px;height:130px;object-fit:contain;filter:drop-shadow(0 8px 22px rgba(0,0,0,.35))}
+  .eyebrow{font-size:12px;letter-spacing:5px;color:var(--gold);text-transform:uppercase;font-weight:600;margin-bottom:8px}
+  .school-name{font-family:'Sora',sans-serif;font-size:clamp(22px,5vw,30px);font-weight:800;line-height:1.18;letter-spacing:.5px}
+  .school-loc{font-size:13px;letter-spacing:4px;color:var(--muted);margin-top:8px;text-transform:uppercase}
+  .evote-badge{display:inline-flex;align-items:center;gap:10px;margin-top:20px;padding:14px 38px;border-radius:50px;background:linear-gradient(135deg,#ff8fb3 0%,#ff7a9c 40%,#ff9a56 100%);color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:20px;letter-spacing:5px;box-shadow:0 12px 34px rgba(255,138,140,.5),0 0 0 1px rgba(255,255,255,.18) inset}
+  .tagline{font-size:14px;color:var(--muted);margin-top:18px;line-height:1.6}
+  .admin-link{margin-top:16px;font-size:11px;letter-spacing:1px;color:rgba(255,255,255,.35);cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:.2s}
+  .admin-link:hover{color:rgba(255,255,255,.7)}
+  .cat-icon{width:56px;height:56px;border-radius:18px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;font-size:26px;background:linear-gradient(135deg,rgba(255,210,77,.22),rgba(255,107,53,.18));border:1px solid rgba(255,210,77,.3)}
+  .heading{font-family:'Sora',sans-serif;font-size:clamp(20px,4.5vw,26px);font-weight:800;text-align:center;letter-spacing:.5px}
+  .subhead{font-size:13px;color:var(--muted);text-align:center;margin-top:6px;margin-bottom:22px}
+  .btn{font-family:'Sora',sans-serif;border:none;border-radius:50px;padding:15px 40px;font-size:15px;font-weight:700;letter-spacing:1px;cursor:pointer;transition:transform .15s,box-shadow .2s,opacity .2s;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+  .btn:active{transform:scale(.96)!important}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 10px 28px rgba(255,107,53,.45)}
+  .btn-primary:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 16px 38px rgba(255,107,53,.6)}
+  .btn-ghost{background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.32);color:#fff}
+  .btn-ghost:hover{background:rgba(255,255,255,.16);transform:translateY(-2px)}
+  .btn-danger{background:linear-gradient(135deg,#ff5f6d,#c0392b);color:#fff;box-shadow:0 10px 28px rgba(229,57,53,.4)}
+  .btn-danger:hover{transform:translateY(-2px) scale(1.03)}
+  .btn:disabled,.btn.disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.4);transform:none!important;box-shadow:none}
+  .btn-full{width:100%}
+  .nav-row{display:flex;gap:10px;margin-top:22px}
+  .nav-row .btn{flex:1}
+  .id-input{width:100%;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.28);border-radius:16px;padding:16px 20px;font-size:18px;color:#fff;text-align:center;letter-spacing:3px;outline:none;font-family:'Sora',sans-serif;transition:.2s}
+  .id-input::placeholder{color:rgba(255,255,255,.34);letter-spacing:1px;font-weight:400}
+  .id-input:focus{border-color:var(--gold);background:rgba(255,255,255,.16);box-shadow:0 0 0 4px rgba(255,210,77,.15)}
+  .id-err{color:#ffb3a0;font-size:13px;text-align:center;margin-top:10px;min-height:18px}
+  .step-card{display:flex;gap:14px;align-items:flex-start;padding:14px;border-radius:16px;background:rgba(255,255,255,.05);margin-bottom:10px;border:1px solid rgba(255,255,255,.08)}
+  .step-num{width:34px;height:34px;flex-shrink:0;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:15px}
+  .step-txt{font-size:14px;line-height:1.55;color:rgba(255,255,255,.9)}
+  .step-txt b{color:var(--gold)}
+  .note{margin-top:14px;padding:13px 16px;border-radius:14px;background:rgba(255,210,77,.1);border:1px solid rgba(255,210,77,.28);font-size:13px;text-align:center;line-height:1.55}
+  .cand-grid{display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow-y:auto;padding:2px 4px 2px 2px}
+  .cand{display:flex;align-items:center;gap:14px;padding:13px 15px;border-radius:18px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.14);cursor:pointer;transition:.22s;position:relative;animation:cardIn .4s both}
+  @keyframes cardIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+  .cand:hover{background:rgba(255,255,255,.12);border-color:rgba(255,210,77,.5);transform:translateY(-2px)}
+  .cand.sel{background:linear-gradient(135deg,rgba(255,107,53,.22),rgba(255,210,77,.14));border-color:var(--gold);box-shadow:0 8px 26px rgba(255,107,53,.25)}
+  .avatar{width:46px;height:46px;border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:17px;color:#fff;position:relative;overflow:visible}
+  .avatar img{width:100%;height:100%;border-radius:14px;object-fit:cover;display:block}
+  .avatar.has-photo{cursor:zoom-in}
+  .av-edit{position:absolute;bottom:-5px;right:-5px;width:21px;height:21px;border-radius:50%;background:var(--accent);border:2px solid #2a1c54;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;cursor:pointer;z-index:2;transition:.15s}
+  .av-edit:hover{transform:scale(1.15)}
+  .lightbox{position:fixed;inset:0;background:rgba(8,5,20,.9);backdrop-filter:blur(8px);z-index:300;display:none;align-items:center;justify-content:center;flex-direction:column;padding:24px;animation:fade .25s}
+  .lightbox.show{display:flex}
+  .lightbox img{max-width:90vw;max-height:74vh;border-radius:18px;box-shadow:0 30px 90px rgba(0,0,0,.6);animation:pop .35s cubic-bezier(.2,1.2,.4,1)}
+  .lightbox .lb-name{font-family:'Sora',sans-serif;font-weight:700;font-size:18px;margin-top:18px;color:#fff}
+  .lightbox .lb-close{margin-top:18px}
+  .lb-empty{width:min(80vw,320px);height:min(80vw,320px);border-radius:18px;background:rgba(255,255,255,.06);border:2px dashed rgba(255,255,255,.3);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-size:14px;text-align:center;padding:20px}
+  .lb-empty .ti{font-size:40px}
+  .cand-info{flex:1;min-width:0}
+  .cand-name{font-weight:600;font-size:16px;font-family:'Sora',sans-serif}
+  .cand-tag{font-size:12px;color:var(--muted)}
+  .cand-radio{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.4);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .cand.sel .cand-radio{border-color:var(--gold);background:var(--gold)}
+  .cand-radio i{opacity:0;color:#3a2a6d;font-size:14px;font-weight:900;transition:.2s}
+  .cand.sel .cand-radio i{opacity:1}
+  .house-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:6px}
+  .house{padding:20px 12px;border-radius:20px;background:rgba(255,255,255,.06);border:2.5px solid rgba(255,255,255,.16);cursor:pointer;text-align:center;transition:.22s;position:relative;overflow:hidden}
+  .house::before{content:'';position:absolute;inset:0;opacity:0;transition:.25s}
+  .house:hover{transform:translateY(-4px) scale(1.02)}
+  .house.sel::before{opacity:.16}
+  .house .h-emoji{font-size:32px;margin-bottom:8px}
+  .house-crest{width:42px;height:auto;max-height:48px;object-fit:contain;border-radius:6px;display:inline-block;vertical-align:middle;filter:drop-shadow(0 3px 8px rgba(0,0,0,.3))}
+  .house-logo-wide{width:100%;max-width:130px;height:auto;object-fit:contain;display:block;margin:0 auto;filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))}
+  .house.knights .h-emoji,.house.spartans .h-emoji,.house.samurais .h-emoji,.house.vikings .h-emoji{margin-bottom:0;display:flex;align-items:center;justify-content:center;min-height:54px}
+  .house .h-name{font-family:'Sora',sans-serif;font-weight:800;font-size:15px;letter-spacing:1.5px}
+  .house .h-check{position:absolute;top:8px;right:10px;opacity:0;color:#fff;font-size:18px;transition:.2s}
+  .house.sel .h-check{opacity:1}
+  .house.spartans{border-color:#ff5252}.house.spartans::before{background:#ff5252}
+  .house.samurais{border-color:#42a5f5}.house.samurais::before{background:#42a5f5}
+  .house.vikings{border-color:#66bb6a}.house.vikings::before{background:#66bb6a}
+  .house.knights{border-color:#ffb300}.house.knights::before{background:#ffb300}
+  .ty-emoji{font-size:64px;text-align:center;margin-bottom:8px;animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+  .ty-h{font-family:'Sora',sans-serif;font-size:30px;font-weight:800;text-align:center;letter-spacing:1px;background:linear-gradient(135deg,var(--gold),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .ty-sub{font-size:14px;color:var(--muted);text-align:center;margin:10px 0 24px;line-height:1.6}
+  .done-wrap{text-align:center}
+  .done-ring{width:96px;height:96px;border-radius:50%;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;font-size:48px;background:linear-gradient(135deg,#43e97b,#38f9d7);box-shadow:0 12px 40px rgba(67,233,123,.45);animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
+  .done-h{font-family:'Sora',sans-serif;font-size:26px;font-weight:800}
+  .done-sub{font-size:14px;color:var(--muted);margin-top:10px;line-height:1.7}
+  .done-id{display:inline-block;margin-top:14px;padding:8px 18px;border-radius:50px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);font-family:'Sora',sans-serif;color:var(--gold);font-size:14px}
+  .done-count{margin-top:12px;font-size:13px;color:var(--muted)}
+  .done-count b{color:#fff;font-family:'Sora',sans-serif}
+  .overlay{position:fixed;inset:0;background:rgba(20,12,42,.72);backdrop-filter:blur(6px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;animation:fade .25s}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .overlay.show{display:flex}
+  .modal{width:100%;max-width:460px;max-height:86vh;overflow-y:auto;border-radius:28px;padding:30px 28px;background:linear-gradient(160deg,#7b4fc7,#5b3fa8);border:1px solid rgba(255,255,255,.2);box-shadow:0 30px 80px rgba(0,0,0,.5);animation:rise .35s}
+  .modal-title{font-family:'Sora',sans-serif;font-size:23px;font-weight:800;text-align:center;margin-bottom:20px}
+  .rev-row{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px}
+  .rev-row:last-of-type{border-bottom:none}
+  .rev-label{color:var(--gold);font-weight:700;font-family:'Sora',sans-serif}
+  .rev-val{text-align:right;color:#fff}
+  .rev-val.empty{color:rgba(255,255,255,.4)}
+  .modal .btn{width:100%}
+  .modal .btn-edit{margin-top:20px;margin-bottom:12px}
+  .modal .btn-close{background:linear-gradient(135deg,#ff7eb3,#ff8a56);color:#fff;box-shadow:0 8px 24px rgba(255,126,86,.5)}
+  .admin-stat{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);margin-bottom:10px}
+  .admin-stat .num{font-family:'Sora',sans-serif;font-weight:800;font-size:26px;color:var(--gold)}
+  .admin-pass{width:100%;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.28);border-radius:14px;padding:14px 18px;font-size:16px;color:#fff;text-align:center;letter-spacing:2px;outline:none;font-family:'Sora',sans-serif;margin-bottom:6px}
+  .admin-pass:focus{border-color:var(--gold)}
+  .admin-msg{font-size:12px;color:var(--muted);text-align:center;margin:8px 0 14px;line-height:1.5}
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:150}
+  @media(max-width:430px){.card{padding:24px 20px}.house-grid{gap:10px}}
+</style>
+</head>
+<body>
+<div class="bg-grad"></div>
+<div class="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+<canvas id="confetti"></canvas>
+
+<div id="app">
+  <div class="stepper" id="stepper">
+    <div class="stepper-track" id="stepperTrack"></div>
+    <div class="stepper-label"><span id="stepName">Head Boy</span><span><b id="stepDone">0</b>/<span id="stepTotal">11</span> done</span></div>
+  </div>
+
+  <!-- P0 landing -->
+  <div class="page" id="p0">
+    <div class="card landing">
+      <div class="logo-wrap"><img class="school-logo" src="PASTE_SCHOOL_LOGO_HERE" alt="School logo"/></div>
+      <div class="eyebrow">Official Student Election</div>
+      <div class="school-name">SRI CHAITANYA<br>TECHNO SCHOOL</div>
+      <div class="school-loc">Banaswadi</div>
+      <div class="evote-badge"><i class="ti ti-checkbox"></i> E-VOTING</div>
+      <div class="tagline">Your voice shapes our leadership.<br>Cast your vote securely and anonymously.</div>
+      <div style="margin-top:24px"><button class="btn btn-primary btn-full" onclick="goTo(1)">Get Started <i class="ti ti-arrow-right"></i></button></div>
+      <div class="admin-link" onclick="openAdmin()"><i class="ti ti-lock"></i> Admin</div>
+    </div>
+  </div>
+
+  <!-- P1 student/staff id -->
+  <div class="page hide-r" id="p1">
+    <div class="card">
+      <div class="cat-icon"><i class="ti ti-id-badge-2"></i></div>
+      <div class="heading">STUDENT / STAFF ID</div>
+      <div class="subhead">Enter your Student or Staff ID to begin voting</div>
+      <input class="id-input" id="sid" type="text" placeholder="e.g. SCS-2024-001" maxlength="25" autocomplete="off"/>
+      <div class="id-err" id="sidErr"></div>
+      <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="checkId()">Vote Now <i class="ti ti-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- P2 instructions -->
+  <div class="page hide-r" id="p2">
+    <div class="card">
+      <div class="cat-icon"><i class="ti ti-list-check"></i></div>
+      <div class="heading">How It Works</div>
+      <div class="subhead">Three simple steps to cast your vote</div>
+      <div class="step-card"><div class="step-num">1</div><div class="step-txt"><b>Log In</b> — Enter your Student/Staff ID to access your secure ballot.</div></div>
+      <div class="step-card"><div class="step-num">2</div><div class="step-txt"><b>Select Candidates</b> — Browse each category and tap your chosen student leader.</div></div>
+      <div class="step-card"><div class="step-num">3</div><div class="step-txt"><b>Review &amp; Submit</b> — Recheck your choices, then submit your final vote.</div></div>
+      <div class="note"><i class="ti ti-lock"></i> You can vote only <b>once</b>. Your ballot is fully <b>anonymous</b>.</div>
+      <button class="btn btn-primary btn-full" style="margin-top:18px" onclick="goTo(3)">Begin Voting <i class="ti ti-arrow-right"></i></button>
+    </div>
+  </div>
+
+  <!-- P3 Head Boy -->
+  <div class="page hide-r" id="p3"><div class="card"><div class="cat-icon">🎓</div><div class="heading">HEAD BOY</div><div class="subhead">Lead the entire student body</div><div class="cand-grid" id="grid-p3"></div><div class="nav-row"><button class="btn btn-ghost" onclick="goBack()"><i class="ti ti-arrow-left"></i> Back</button><button class="btn btn-primary disabled" id="b-p3" onclick="advance('headboy',4)">Next <i class="ti ti-arrow-right"></i></button></div></div></div>
+  <!-- P4 Head Girl -->
+  <div class="page hide-r" id="p4"><div class="card"><div class="cat-icon">🎓</div><div class="heading">HEAD GIRL</div><div class="subhead">Lead the entire student body</div><div class="cand-grid" id="grid-p4"></div><div class="nav-row"><button class="btn btn-ghost" onclick="goBack()"><i class="ti ti-arrow-left"></i> Back</button><button class="btn btn-primary disabled" id="b-p4" onclick="advance('headgirl',5)">Next <i class="ti ti-arrow-right"></i></button></div></div></div>
+  <!-- P5 Deputy Head Boy -->
+  <div class="page hide-r" id="p5"><div class="card"><div class="cat-icon">🤝</div><div class="heading">DEPUTY HEAD BOY</div><div class="subhead">Support the head of the student body</div><div class="cand-grid" id="grid-p5"></div><div class="nav-row"><button class="btn btn-ghost" onclick="goBack()"><i class="ti ti-arrow-left"></i> Back</button><button class="btn btn-primary disabled" id="b-p5" onclick="advance('depheadboy',6)">Next <i class="ti ti-arrow-right"></i></button></div></div></div>
+  <!-- P6 Deputy Head Girl -->
+  <div class="page hide-r" id="p6"><div class="card"><div class="cat-icon">🤝</div><div class="heading">DEPUTY HEAD GIRL</div><div class="subhead">Support the head of the student body</div><div class="cand-grid" id="grid-p6"></div><div class="nav-row"><button class="btn btn-ghost" onclick="goBack()"><i class="ti ti-arrow-left"></i> Back</button><button class="btn btn-primary disabled" id="b-p6" onclick="advance('depheadgirl',7)">Next <i class="ti ti-arrow-right"></i></button></div></div></div>
+
+  <!-- P7 house (replace each PASTE_..._HERE with your house logo) -->
+  <div class="page hide-r" id="p7"><div class="card"><div class="cat-icon">🏰</div><div class="heading">CHOOSE YOUR HOUSE</div><div class="subhead">You'll vote for your house captain next</div>
+    <div class="house-grid">
+      <div class="house spartans" id="h-SPARTANS" onclick="pickHouse('SPARTANS')"><i class="ti ti-check h-check"></i><div class="h-emoji"><img class="house-logo-wide" src="PASTE_SPARTANS_LOGO_HERE" alt="House of Spartans"/></div><div class="h-name" style="opacity:0;height:0;margin:0">SPARTANS</div></div>
+      <div class="house samurais" id="h-SAMURAIS" onclick="pickHouse('SAMURAIS')"><i class="ti ti-check h-check"></i><div class="h-emoji"><img class="house-logo-wide" src="PASTE_SAMURAIS_LOGO_HERE" alt="House of Samurais"/></div><div class="h-name" style="opacity:0;height:0;margin:0">SAMURAIS</div></div>
+      <div class="house vikings" id="h-VIKINGS" onclick="pickHouse('VIKINGS')"><i class="ti ti-check h-check"></i><div class="h-emoji"><img class="house-logo-wide" src="PASTE_VIKINGS_LOGO_HERE" alt="House of Vikings"/></div><div class="h-name" style="opacity:0;height:0;margin:0">VIKINGS</div></div>
+      <div class="house knights" id="h-KNIGHTS" onclick="pickHouse('KNIGHTS')"><i class="ti ti-check h-check"></i><div class="h-emoji"><img class="house-logo-wide" src="PASTE_KNIGHTS_LOGO_HERE" alt="House of Knights"/></div><div class="h-name" style="opacity:0;height:0;margin:0">KNIGHTS</div></div>
+    </div>
+    <div class="nav-row"><button class="btn btn-ghost" onclick="goBack()"><i class="ti ti-arrow-left"></i> Back</button><button class="btn btn-primary disabled" id="b-p7" onclick="goCaptain()">Next <i class="ti ti-arrow-right"></i></button></div>
+  </div></div>
+
+  <!-- P8 house captain -->
+  <div class="page hide-r" id="p8"><div class="card"><div class="cat-icon">⭐</div><div class="heading" id="hcapH">HOUSE CAPTAIN</div><div class="subhead">Lead your house to glory</div><div class="cand-grid" id="grid-p8"></div><div class="nav-row"><button class="btn btn-ghost" onclick="goBack()"><i class="ti ti-arrow-left"></i> Back</button><button class="btn btn-primary disabled" id="b-p8" onclick="advance('hcaptain',9)">Next <i class="ti ti-arrow-right"></i></button></div></div></div>
+  <!-- P9 vice captain -->
+  <div class="page hide-r" id="p9"><div class="card"><div class="cat-icon">✨</div><div class="heading" id="vcapH">VICE CAPTAIN</div><div class="subhead">Support your house captain</div><div class="cand-grid" id="grid-p9"></div><div class="nav-row"><button class="btn btn-ghost" onclick="goBack()"><i class="ti ti-arrow-left"></i> Back</button><button class="btn btn-primary disabled" id="b-p9" onclick="advance('vcaptain',10)">Next <i class="ti ti-arrow-right"></i></button></div></div></div>
+  <!-- P10 Sports Captain -->
+  <div class="page hide-r" id="p10"><div class="card"><div class="cat-icon">🏆</div><div class="heading">SPORTS CAPTAIN</div><div class="subhead">Lead the school in athletics</div><div class="cand-grid" id="grid-p10"></div><div class="nav-row"><button class="btn btn-ghost" onclick="goBack()"><i class="ti ti-arrow-left"></i> Back</button><button class="btn btn-primary disabled" id="b-p10" onclick="advance('sportscap',11)">Next <i class="ti ti-arrow-right"></i></button></div></div></div>
+  <!-- P11 Eco-Science Secretary -->
+  <div class="page hide-r" id="p11"><div class="card"><div class="cat-icon">🌱</div><div class="heading">ECO-SCIENCE SECRETARY</div><div class="subhead">Champion sustainability &amp; science</div><div class="cand-grid" id="grid-p11"></div><div class="nav-row"><button class="btn btn-ghost" onclick="goBack()"><i class="ti ti-arrow-left"></i> Back</button><button class="btn btn-primary disabled" id="b-p11" onclick="advance('ecosec',12)">Next <i class="ti ti-arrow-right"></i></button></div></div></div>
+  <!-- P12 Heritage Secretary -->
+  <div class="page hide-r" id="p12"><div class="card"><div class="cat-icon">🏛️</div><div class="heading">HERITAGE SECRETARY</div><div class="subhead">Preserve culture &amp; tradition</div><div class="cand-grid" id="grid-p12"></div><div class="nav-row"><button class="btn btn-ghost" onclick="goBack()"><i class="ti ti-arrow-left"></i> Back</button><button class="btn btn-primary disabled" id="b-p12" onclick="advance('heritageSec',13)">Next <i class="ti ti-arrow-right"></i></button></div></div></div>
+  <!-- P13 Literary Secretary -->
+  <div class="page hide-r" id="p13"><div class="card"><div class="cat-icon">📖</div><div class="heading">LITERARY SECRETARY</div><div class="subhead">Foster reading &amp; expression</div><div class="cand-grid" id="grid-p13"></div><div class="nav-row"><button class="btn btn-ghost" onclick="goBack()"><i class="ti ti-arrow-left"></i> Back</button><button class="btn btn-primary disabled" id="b-p13" onclick="advance('literarySec',14)">Next <i class="ti ti-arrow-right"></i></button></div></div></div>
+
+  <!-- P14 thank you -->
+  <div class="page hide-r" id="p14"><div class="card" style="text-align:center"><div class="ty-emoji">🎉</div><div class="ty-h">All Done!</div><div class="ty-sub">You've completed every category.<br>Review your selections before final submission.</div><button class="btn btn-ghost btn-full" style="margin-bottom:12px" onclick="showReview()"><i class="ti ti-eye"></i> Recheck Selections</button><button class="btn btn-danger btn-full" onclick="submitVote()"><i class="ti ti-send"></i> Submit Final Vote</button></div></div>
+
+  <!-- P15 submitted -->
+  <div class="page hide-r" id="p15"><div class="card done-wrap"><div class="done-ring"><i class="ti ti-check"></i></div><div class="done-h">Vote Submitted!</div><div class="done-sub">Thank you for participating in the<br>Sri Chaitanya student elections.<br>Your ballot has been saved anonymously.</div><div class="done-id" id="doneId"></div><div class="done-count" id="doneCount"></div><button class="btn btn-primary btn-full" style="margin-top:22px" onclick="nextVoter()"><i class="ti ti-user-plus"></i> Next Voter</button></div></div>
+
+  <!-- photo lightbox -->
+  <div class="lightbox" id="lightbox"><div id="lbBody"></div></div>
+
+  <!-- admin panel -->
+  <div class="overlay" id="adminOverlay"><div class="modal"><div class="modal-title"><i class="ti ti-shield-lock"></i> Admin Panel</div><div id="adminBody"></div></div></div>
+
+  <!-- review modal -->
+  <div class="overlay" id="overlay"><div class="modal"><div class="modal-title">Your Selections</div><div id="revList"></div><button class="btn btn-ghost btn-edit" onclick="editSel()"><i class="ti ti-edit"></i> Edit Selection</button><button class="btn btn-close" onclick="closeReview()">Close</button></div></div>
+</div>
+
+<script>
+const NOMINEES=['Aarav Sharma','Priya Reddy','Kiran Mehta','Divya Nair','Rohan Gupta'];
+const HOUSES=['SPARTANS','SAMURAIS','VIKINGS','KNIGHTS'];
+const LETTERS=['A','B','C','D','E'];
+const AV=['#ff6b6b','#4dabf7','#51cf66','#ffd43b','#cc5de8'];
+const TOTAL=16;
+const VOTE_KEYS=['headboy','headgirl','depheadboy','depheadgirl','house','hcaptain','vcaptain','sportscap','ecosec','heritageSec','literarySec'];
+const STEP_NAMES=['Head Boy','Head Girl','Deputy Head Boy','Deputy Head Girl','House','House Captain','Vice Captain','Sports Captain','Eco-Science Sec','Heritage Sec','Literary Sec'];
+const PAGE_STEP={3:0,4:1,5:2,6:3,7:4,8:5,9:6,10:7,11:8,12:9,13:10};
+let current=0, house='', votes={};
+const nomMap={p3:'headboy',p4:'headgirl',p5:'depheadboy',p6:'depheadgirl',p8:'hcaptain',p9:'vcaptain',p10:'sportscap',p11:'ecosec',p12:'heritageSec',p13:'literarySec'};
+
+function initials(n){return n.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();}
+
+function renderGrid(pid){
+  const key=nomMap[pid], grid=document.getElementById('grid-'+pid);
+  if(!grid)return; grid.innerHTML='';
+  NOMINEES.forEach((name,i)=>{
+    const sel=votes[key]===i;
+    const photo=getPhoto(i);
+    const d=document.createElement('div');
+    d.className='cand'+(sel?' sel':'');
+    d.style.animationDelay=(i*0.05)+'s';
+    const avInner = photo ? `<img src="${photo}" alt="${name}"/>` : initials(name);
+    d.innerHTML=`<div class="avatar${photo?' has-photo':''}" data-i="${i}" style="${photo?'':'background:linear-gradient(135deg,'+AV[i]+','+AV[i]+'cc)'}">${avInner}<span class="av-edit" data-edit="${i}"><i class="ti ti-camera"></i></span></div>`+
+      `<div class="cand-info"><div class="cand-name">${name}</div><div class="cand-tag">Candidate ${LETTERS[i]}</div></div>`+
+      `<div class="cand-radio"><i class="ti ti-check"></i></div>`;
+    d.onclick=()=>{votes[key]=i;renderGrid(pid);document.getElementById('b-'+pid).classList.remove('disabled');updateStepper();};
+    const av=d.querySelector('.avatar');
+    av.addEventListener('click',ev=>{ev.stopPropagation();openLightbox(i);});
+    d.querySelector('.av-edit').addEventListener('click',ev=>{ev.stopPropagation();editPhoto(i);});
+    grid.appendChild(d);
+  });
+}
+
+/* candidate photos (editable, saved in browser) */
+function loadPhotos(){try{return JSON.parse(localStorage.getItem('sct_candidate_photos')||'{}');}catch(e){return {};}}
+function getPhoto(i){return loadPhotos()[i]||'';}
+function savePhoto(i,dataUrl){const p=loadPhotos();if(dataUrl)p[i]=dataUrl;else delete p[i];try{localStorage.setItem('sct_candidate_photos',JSON.stringify(p));}catch(e){alert('Could not save photo — it may be too large. Try a smaller image.');}}
+function editPhoto(i){const inp=document.createElement('input');inp.type='file';inp.accept='image/*';inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{savePhoto(i,r.result);refreshAllGrids();};r.readAsDataURL(f);};inp.click();}
+function refreshAllGrids(){['p3','p4','p5','p6','p8','p9','p10','p11','p12','p13'].forEach(id=>{if(document.getElementById('grid-'+id))renderGrid(id);});}
+function openLightbox(i){const photo=getPhoto(i), name=NOMINEES[i];const body=document.getElementById('lbBody');if(photo){body.innerHTML=`<img src="${photo}" alt="${name}"/><div class="lb-name">${name} &nbsp;·&nbsp; Candidate ${LETTERS[i]}</div><button class="btn btn-ghost lb-close" onclick="closeLightbox()"><i class="ti ti-x"></i> Close</button><button class="btn btn-primary" style="margin-top:10px" onclick="closeLightbox();editPhoto(${i})"><i class="ti ti-camera"></i> Change Photo</button>`;}else{body.innerHTML=`<div class="lb-empty"><i class="ti ti-photo-off"></i>No photo added yet for<br><b>${name}</b></div><button class="btn btn-primary lb-close" onclick="closeLightbox();editPhoto(${i})"><i class="ti ti-upload"></i> Add Photo</button><button class="btn btn-ghost" style="margin-top:10px" onclick="closeLightbox()">Close</button>`;}document.getElementById('lightbox').classList.add('show');}
+function closeLightbox(){document.getElementById('lightbox').classList.remove('show');}
+document.getElementById('lightbox').addEventListener('click',e=>{if(e.target.id==='lightbox')closeLightbox();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
+
+function updateStepper(){
+  const track=document.getElementById('stepperTrack');
+  if(track.children.length===0){STEP_NAMES.forEach((_,i)=>{const s=document.createElement('div');s.className='step-dot';s.id='sd'+i;track.appendChild(s);});document.getElementById('stepTotal').textContent=STEP_NAMES.length;}
+  let done=0;
+  VOTE_KEYS.forEach((k,i)=>{const dot=document.getElementById('sd'+i);const filled=(k==='house')?!!house:(votes[k]!==undefined);dot.classList.toggle('done',filled);if(filled)done++;dot.classList.remove('active');});
+  document.getElementById('stepDone').textContent=done;
+  if(PAGE_STEP[current]!==undefined){document.getElementById('sd'+PAGE_STEP[current]).classList.add('active');document.getElementById('stepName').textContent=STEP_NAMES[PAGE_STEP[current]];}
+}
+
+function goTo(n){const from=document.getElementById('p'+current), to=document.getElementById('p'+n), fwd=n>current;from.classList.remove('hide-l','hide-r');from.classList.add(fwd?'hide-l':'hide-r');to.classList.remove('hide-l','hide-r');current=n;document.getElementById('stepper').classList.toggle('show', n>=3&&n<=13);if(nomMap['p'+n])renderGrid('p'+n);if(n>=3&&n<=13)updateStepper();}
+function goBack(){const p={1:0,2:1,3:2,4:3,5:4,6:5,7:6,8:7,9:8,10:9,11:10,12:11,13:12,14:13};if(p[current]!==undefined)goTo(p[current]);}
+function advance(key,nxt){if(votes[key]===undefined)return;goTo(nxt);}
+function checkId(){const v=document.getElementById('sid').value.trim();if(!v){document.getElementById('sidErr').textContent='Please enter your Student or Staff ID to continue.';return;}document.getElementById('sidErr').textContent='';goTo(2);}
+function pickHouse(n){house=n;document.querySelectorAll('.house').forEach(h=>h.classList.remove('sel'));document.getElementById('h-'+n).classList.add('sel');document.getElementById('b-p7').classList.remove('disabled');updateStepper();}
+function goCaptain(){if(!house)return;document.getElementById('hcapH').textContent=house+' CAPTAIN';document.getElementById('vcapH').textContent=house+' VICE CAPTAIN';goTo(8);}
+
+function showReview(){
+  const rows=[['Head Boy','headboy'],['Head Girl','headgirl'],['Deputy Head Boy','depheadboy'],['Deputy Head Girl','depheadgirl']];
+  const rows2=[[(house||'House')+' Captain','hcaptain'],[(house||'House')+' Vice Captain','vcaptain'],['Sports Captain','sportscap'],['Eco-Science Secretary','ecosec'],['Heritage Secretary','heritageSec'],['Literary Secretary','literarySec']];
+  let h='';
+  const row=(l,k)=>{const i=votes[k];const v=(i===undefined)?'<span class="rev-val empty">Not selected</span>':'<span class="rev-val">'+NOMINEES[i]+'</span>';return '<div class="rev-row"><span class="rev-label">'+l+'</span>'+v+'</div>';};
+  rows.forEach(([l,k])=>h+=row(l,k));
+  h+='<div class="rev-row"><span class="rev-label">House</span>'+(house?'<span class="rev-val">'+house+'</span>':'<span class="rev-val empty">Not selected</span>')+'</div>';
+  rows2.forEach(([l,k])=>h+=row(l,k));
+  document.getElementById('revList').innerHTML=h;document.getElementById('overlay').classList.add('show');
+}
+function closeReview(){document.getElementById('overlay').classList.remove('show');}
+function editSel(){closeReview();goTo(3);}
+
+function getBallots(){try{return JSON.parse(localStorage.getItem('sct_evote_ballots')||'[]');}catch(e){return [];}}
+function saveBallot(){
+  const record={studentId:document.getElementById('sid').value.trim(),time:new Date().toISOString(),house:house,selections:{}};
+  ['headboy','headgirl','depheadboy','depheadgirl','hcaptain','vcaptain','sportscap','ecosec','heritageSec','literarySec'].forEach(k=>{record.selections[k]=(votes[k]!==undefined)?{letter:LETTERS[votes[k]],name:NOMINEES[votes[k]]}:null;});
+  const all=getBallots();all.push(record);try{localStorage.setItem('sct_evote_ballots',JSON.stringify(all));}catch(e){}
+}
+
+/* ADMIN PANEL & EXCEL EXPORT */
+const ADMIN_PASSCODE='admin123';  // <-- change this to your own admin password
+let adminUnlocked=false;
+const POS_COLS=[['House','house'],['Head Boy','headboy'],['Head Girl','headgirl'],['Deputy Head Boy','depheadboy'],['Deputy Head Girl','depheadgirl'],['House Captain','hcaptain'],['Vice Captain','vcaptain'],['Sports Captain','sportscap'],['Eco-Science Secretary','ecosec'],['Heritage Secretary','heritageSec'],['Literary Secretary','literarySec']];
+
+function openAdmin(){adminUnlocked=false;renderAdmin();document.getElementById('adminOverlay').classList.add('show');}
+function closeAdmin(){document.getElementById('adminOverlay').classList.remove('show');}
+function renderAdmin(){
+  const body=document.getElementById('adminBody');
+  if(!adminUnlocked){
+    body.innerHTML=`<div class="admin-msg">Enter the admin passcode to view and export results.</div><input class="admin-pass" id="adminPass" type="password" placeholder="Passcode" autocomplete="off"/><div class="admin-msg" id="adminErr" style="color:#ffb3a0;min-height:14px"></div><button class="btn btn-primary btn-full" onclick="tryAdmin()">Unlock <i class="ti ti-lock-open"></i></button><button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="closeAdmin()">Cancel</button>`;
+    setTimeout(()=>{const p=document.getElementById('adminPass');if(p){p.focus();p.onkeydown=e=>{if(e.key==='Enter')tryAdmin();};}},50);
+    return;
+  }
+  const n=getBallots().length;
+  body.innerHTML=`<div class="admin-stat"><span>Votes recorded</span><span class="num">${n}</span></div><div class="admin-msg">Download every ballot as an Excel spreadsheet, with a results-summary tab showing totals per candidate.</div><button class="btn btn-primary btn-full" onclick="exportExcel()"><i class="ti ti-file-spreadsheet"></i> Download Excel (.xlsx)</button><button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="exportCSV()"><i class="ti ti-file-text"></i> Download CSV</button><button class="btn btn-ghost btn-full" style="margin-top:10px;border-color:rgba(255,120,120,.5);color:#ffb3a0" onclick="clearVotes()"><i class="ti ti-trash"></i> Clear All Votes</button><button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="closeAdmin()">Close</button>`;
+}
+function tryAdmin(){const v=document.getElementById('adminPass').value;if(v===ADMIN_PASSCODE){adminUnlocked=true;renderAdmin();}else{document.getElementById('adminErr').textContent='Incorrect passcode.';}}
+
+function ballotsToRows(){
+  const ballots=getBallots();
+  const header=['#','Date & Time','Voter ID',...POS_COLS.map(c=>c[0])];
+  const rows=[header];
+  ballots.forEach((b,idx)=>{
+    const row=[idx+1, new Date(b.time).toLocaleString(), b.studentId||''];
+    POS_COLS.forEach(([,key])=>{if(key==='house'){row.push(b.house||'');}else{const s=b.selections&&b.selections[key];row.push(s?(s.name+' ('+s.letter+')'):'');}});
+    rows.push(row);
+  });
+  return rows;
+}
+function tallyRows(){
+  const ballots=getBallots();
+  const rows=[['Position','Rank','Candidate','Votes','Result']];
+  POS_COLS.forEach(([label,key])=>{
+    const counts={};
+    if(key==='house'){HOUSES.forEach(h=>counts[h]=0);}else{NOMINEES.forEach(n=>counts[n]=0);}
+    ballots.forEach(b=>{let val='';if(key==='house')val=b.house||'';else{const s=b.selections&&b.selections[key];val=s?s.name:'';}if(val) counts[val]=(counts[val]||0)+1;});
+    const sorted=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+    const topVotes=sorted.length?sorted[0][1]:0;
+    sorted.forEach(([cand,c],i)=>{const isWinner=(c===topVotes && topVotes>0);const tied=sorted.filter(x=>x[1]===topVotes && topVotes>0).length>1;const result=isWinner?(tied?'Tie for 1st':'WINNER'):'';rows.push([i===0?label:'', i+1, cand, c, result]);});
+    rows.push(['','','','','']);
+  });
+  return rows;
+}
+function exportExcel(){
+  const ballots=getBallots();
+  if(ballots.length===0){alert('No votes recorded yet.');return;}
+  if(typeof XLSX==='undefined'){exportCSV();return;}
+  const wb=XLSX.utils.book_new();
+  const ws1=XLSX.utils.aoa_to_sheet(ballotsToRows());
+  const ws2=XLSX.utils.aoa_to_sheet(tallyRows());
+  XLSX.utils.book_append_sheet(wb,ws1,'All Ballots');
+  XLSX.utils.book_append_sheet(wb,ws2,'Results Summary');
+  XLSX.writeFile(wb,'SCS_Election_Results_'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+function exportCSV(){
+  const ballots=getBallots();
+  if(ballots.length===0){alert('No votes recorded yet.');return;}
+  const rows=ballotsToRows();
+  const csv=rows.map(r=>r.map(c=>{const s=(''+c).replace(/"/g,'""');return /[",\n]/.test(s)?'"'+s+'"':s;}).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='SCS_Election_Results_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(url);
+}
+function clearVotes(){
+  const body=document.getElementById('adminBody');
+  body.innerHTML=`<div class="admin-msg" style="font-size:14px;color:#fff;line-height:1.6">Delete <b>ALL</b> recorded votes?<br><span style="color:#ffb3a0">This cannot be undone.</span><br><br>Export to Excel first if you want a backup.</div><button class="btn btn-danger btn-full" onclick="confirmClear()"><i class="ti ti-trash"></i> Yes, delete everything</button><button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="renderAdmin()">Cancel</button>`;
+}
+function confirmClear(){
+  try{localStorage.removeItem('sct_evote_ballots');}catch(e){}
+  const body=document.getElementById('adminBody');
+  body.innerHTML=`<div class="admin-msg" style="font-size:15px;color:#fff"><i class="ti ti-circle-check" style="color:#43e97b;font-size:34px;display:block;margin-bottom:8px"></i>All votes have been cleared.</div><button class="btn btn-primary btn-full" onclick="renderAdmin()">Back to Admin</button>`;
+}
+
+function submitVote(){
+  saveBallot();
+  document.getElementById('doneId').textContent='ID: '+document.getElementById('sid').value.trim();
+  const n=getBallots().length;
+  document.getElementById('doneCount').innerHTML='<b>'+n+'</b> vote'+(n===1?'':'s')+' recorded so far';
+  goTo(15);document.getElementById('stepper').classList.remove('show');fireConfetti();
+}
+function nextVoter(){
+  votes={}; house='';
+  document.getElementById('sid').value='';document.getElementById('sidErr').textContent='';
+  document.querySelectorAll('.house').forEach(h=>h.classList.remove('sel'));
+  ['p3','p4','p5','p6','p7','p8','p9','p10','p11','p12','p13'].forEach(id=>{const b=document.getElementById('b-'+id);if(b)b.classList.add('disabled');});
+  ['p3','p4','p5','p6','p8','p9','p10','p11','p12','p13'].forEach(id=>renderGrid(id));
+  document.querySelectorAll('.step-dot').forEach(d=>d.classList.remove('done','active'));
+  goTo(0);
+}
+
+function fireConfetti(){
+  const c=document.getElementById('confetti'),x=c.getContext('2d');
+  c.width=innerWidth;c.height=innerHeight;
+  const cols=['#ff6b35','#ffd24d','#42a5f5','#66bb6a','#cc5de8','#ff7eb3'];
+  let p=[];
+  for(let i=0;i<140;i++)p.push({x:Math.random()*c.width,y:-20-Math.random()*c.height*0.5,r:4+Math.random()*6,c:cols[i%cols.length],vy:2+Math.random()*4,vx:-2+Math.random()*4,a:Math.random()*6.28,va:-0.2+Math.random()*0.4});
+  let t=0;
+  (function loop(){x.clearRect(0,0,c.width,c.height);t++;p.forEach(o=>{o.y+=o.vy;o.x+=o.vx;o.a+=o.va;x.save();x.translate(o.x,o.y);x.rotate(o.a);x.fillStyle=o.c;x.fillRect(-o.r/2,-o.r/2,o.r,o.r*0.6);x.restore();});if(t<260)requestAnimationFrame(loop);else x.clearRect(0,0,c.width,c.height);})();
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Enter'){if(current===1)checkId();else{const b=document.getElementById('b-p'+current)||document.querySelector('#p'+current+' .btn-primary');if(b&&!b.classList.contains('disabled'))b.click();}}});
+window.addEventListener('resize',()=>{const c=document.getElementById('confetti');c.width=innerWidth;c.height=innerHeight;});
+renderGrid('p3');
+</script>
+</body>
+</html>
